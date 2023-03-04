@@ -30,6 +30,7 @@ Description=KMS System Console on %I
 Documentation=man:kmscon(1)
 After=systemd-user-sessions.service
 After=plymouth-quit-wait.service
+After=rc-local.service
 Before=getty.target
 Conflicts=getty@%i.service
 OnFailure=getty@%i.service

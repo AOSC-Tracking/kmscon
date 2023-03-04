@@ -1,6 +1,8 @@
 [Unit]
 Description=KMS System Console
 Documentation=man:kmscon(1)
+After=systemd-user-sessions.service
+After=rc-local.service
 
 [Service]
 ExecStart=@bindir@/kmscon -l /bin/login
