@@ -1,6 +1,7 @@
 [Unit]
 Description=KMS System Console
 Documentation=man:kmscon(1)
+After=plymouth-quit-wait.service
 After=systemd-user-sessions.service
 After=rc-local.service
 
