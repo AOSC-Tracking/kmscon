@@ -219,7 +219,7 @@ if enable_renderer_pixman
       'kmscon_mod_pixman.c',
     ],
     name_prefix: '',
-    dependencies: [pixman_deps, shl_deps],
+    dependencies: [libtsm_deps, pixman_deps, shl_deps],
     install: true,
     install_dir: moduledir,
   )
