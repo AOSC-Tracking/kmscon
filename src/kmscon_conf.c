@@ -129,7 +129,7 @@ static void print_help()
 		"\t                                  Shortcut to scroll page up\n"
 		"\t    --grab-page-down <grab>     [<Shift>Next]\n"
 		"\t                                  Shortcut to scroll page down\n"
-		"\t    --grab-zoom-in <grab>       [<Ctrl>plus]\n"
+		"\t    --grab-zoom-in <grab>       [<Ctrl>equal]\n"
 		"\t                                  Shortcut to increase font size\n"
 		"\t    --grab-zoom-out <grab>      [<Ctrl>minus]\n"
 		"\t                                  Shortcut to decrease font size\n"
@@ -669,7 +669,7 @@ static struct conf_grab def_grab_page_up = CONF_SINGLE_GRAB(SHL_SHIFT_MASK, XKB_
 
 static struct conf_grab def_grab_page_down = CONF_SINGLE_GRAB(SHL_SHIFT_MASK, XKB_KEY_Next);
 
-static struct conf_grab def_grab_zoom_in = CONF_SINGLE_GRAB(SHL_CONTROL_MASK, XKB_KEY_plus);
+static struct conf_grab def_grab_zoom_in = CONF_SINGLE_GRAB(SHL_CONTROL_MASK, XKB_KEY_equal);
 
 static struct conf_grab def_grab_zoom_out = CONF_SINGLE_GRAB(SHL_CONTROL_MASK, XKB_KEY_minus);
 
