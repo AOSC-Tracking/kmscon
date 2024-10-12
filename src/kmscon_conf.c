@@ -141,7 +141,6 @@ static void print_help()
 		"\t                                    available\n"
 		"\t    --gpus={all,aux,primary}[all]   GPU selection mode\n"
 		"\t    --render-engine <eng>   [-]     Console renderer\n"
-		"\t    --render-timing         [off]   Print renderer timing information\n"
 		"\n"
 		"Font Options:\n"
 		"\t    --font-engine <engine>  [pango]\n"
