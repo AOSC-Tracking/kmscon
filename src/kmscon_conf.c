@@ -51,7 +51,7 @@ static void print_help()
 	 *       |10|    20   |    30   |    40   |    50   |    60   |    70   |    80   |
 	 *      "\t901234567890123456789012345678901234567890123456789012345678901234567890\n"
 	 */
-	fprintf(stderr,
+	fprintf(stdout,
 		"Usage:\n"
 		"\t%1$s [options]\n"
 		"\t%1$s -h [options]\n"
