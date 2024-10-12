@@ -468,14 +468,6 @@
                 'bbulk' and 'gltex'. (default: detect by GPU type)</para>
         </listitem>
       </varlistentry>
-
-      <varlistentry>
-        <term><option>--render-timing</option></term>
-        <listitem>
-          <para>Display timing information of the render engines. This should
-                only be used to debug render engines. (default: off)</para>
-        </listitem>
-      </varlistentry>
     </variablelist>
 
     <para>Font Options:</para>
