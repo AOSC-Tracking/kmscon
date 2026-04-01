@@ -89,6 +89,8 @@ struct display {
 	unsigned int flags;
 	unsigned int width;
 	unsigned int height;
+	unsigned int mm_width;
+	unsigned int mm_height;
 	unsigned int default_orientation;
 
 	struct video *video;

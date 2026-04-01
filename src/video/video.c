@@ -244,6 +244,24 @@ unsigned int display_get_height(struct display *disp)
 }
 
 SHL_EXPORT
+unsigned int display_get_mm_width(struct display *disp)
+{
+	if (!disp)
+		return 0;
+
+	return disp->mm_width;
+}
+
+SHL_EXPORT
+unsigned int display_get_mm_height(struct display *disp)
+{
+	if (!disp)
+		return 0;
+
+	return disp->mm_height;
+}
+
+SHL_EXPORT
 unsigned int display_get_default_orientation(struct display *disp)
 {
 	if (!disp)

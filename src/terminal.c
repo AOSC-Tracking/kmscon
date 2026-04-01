@@ -98,6 +98,7 @@ struct kmscon_terminal {
 
 	struct kmscon_font_attr font_attr;
 	struct kmscon_font *font;
+	unsigned int font_scale;
 
 	struct kmscon_pointer pointer;
 
@@ -722,6 +723,45 @@ int terminal_add_display(struct kmscon_terminal *term, struct display *disp)
 	scr->term = term;
 	scr->disp = disp;
 	scr->enabled = true;
+
+	{
+		unsigned int sw = display_get_width(disp);
+		unsigned int sh = display_get_height(disp);
+		unsigned int mm_w = display_get_mm_width(disp);
+		unsigned int mm_h = display_get_mm_height(disp);
+
+		if (mm_w > 0 && mm_h > 0) {
+			uint64_t ppi_x = ((uint64_t)sw * 254) / ((uint64_t)mm_w * 10);
+			uint64_t ppi_y = ((uint64_t)sh * 254) / ((uint64_t)mm_h * 10);
+			unsigned int ppi = (ppi_x + ppi_y) / 2;
+			unsigned int scale = (ppi + 48) / 96;
+
+			if (scale < 1)
+				scale = 1;
+
+			if (scale > term->font_scale) {
+				unsigned int old_height = term->font_attr.height;
+				unsigned int new_height =
+					(old_height / term->font_scale) * scale;
+
+				if (!new_height)
+					new_height = 1;
+
+				log_info("HiDPI display detected (%ux%u, PPI: %u). Scaling "
+					 "font to %ux.",
+					 sw, sh, ppi, scale);
+
+				term->font_attr.height = new_height;
+				ret = font_set(term);
+				if (ret) {
+					term->font_attr.height = old_height;
+					log_warning("cannot scale font for HiDPI display: %d", ret);
+				} else {
+					term->font_scale = scale;
+				}
+			}
+		}
+	}
 
 	ret = display_register_pageflip(scr->disp, display_pageflip, scr);
 	if (ret) {
@@ -1387,6 +1427,7 @@ struct kmscon_terminal *terminal_new(struct kmscon_session *session, unsigned in
 
 	strncpy(term->font_attr.name, term->conf->font_name, KMSCON_FONT_MAX_NAME - 1);
 	term->font_attr.height = term->conf->font_size;
+	term->font_scale = 1;
 
 	ret = tsm_screen_new(&term->console, log_llog, NULL);
 	if (ret)
