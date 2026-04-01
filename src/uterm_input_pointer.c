@@ -17,7 +17,7 @@ static void pointer_update_inactivity_timer(struct uterm_input_dev *dev)
 	ev_timer_update(dev->input->hide_pointer, &spec);
 }
 
-static void pointer_dev_send_move(struct uterm_input_dev *dev)
+static void pointer_dev_send_move(struct uterm_input_dev *dev, int32_t dx, int32_t dy, bool is_rel)
 {
 	struct uterm_input_pointer_event pev = {0};
 
@@ -25,6 +25,9 @@ static void pointer_dev_send_move(struct uterm_input_dev *dev)
 	pev.pointer_x = dev->pointer.x;
 	pev.pointer_y = dev->pointer.y;
 	pev.is_touchscreen = (dev->pointer.kind == POINTER_TOUCHSCREEN);
+	pev.delta_x = dx;
+	pev.delta_y = dy;
+	pev.is_relative = is_rel;
 
 	/* Include button state if a button is pressed during motion (drag) */
 	if (dev->pointer.pressed_button != BUTTON_NONE) {
@@ -82,7 +85,7 @@ void pointer_dev_rel(struct uterm_input_dev *dev, uint16_t code, int32_t value)
 			dev->pointer.x = 0;
 		if (dev->pointer.x > dev->input->pointer_max_x)
 			dev->pointer.x = dev->input->pointer_max_x;
-		pointer_dev_send_move(dev);
+		pointer_dev_send_move(dev, value, 0, true);
 		break;
 	case REL_Y:
 		dev->pointer.y += value;
@@ -90,7 +93,7 @@ void pointer_dev_rel(struct uterm_input_dev *dev, uint16_t code, int32_t value)
 			dev->pointer.y = 0;
 		if (dev->pointer.y > dev->input->pointer_max_y)
 			dev->pointer.y = dev->input->pointer_max_y;
-		pointer_dev_send_move(dev);
+		pointer_dev_send_move(dev, 0, value, true);
 		break;
 	case REL_WHEEL:
 		pointer_dev_send_wheel(dev, value);
@@ -102,6 +105,9 @@ void pointer_dev_rel(struct uterm_input_dev *dev, uint16_t code, int32_t value)
 
 static void pointer_dev_abs_x(struct uterm_input_dev *dev, int32_t value)
 {
+	int32_t old_x = dev->pointer.x;
+	bool is_rel = false;
+
 	switch (dev->pointer.kind) {
 	case POINTER_TOUCHPAD:
 		if (dev->pointer.touchpaddown == true)
@@ -116,6 +122,7 @@ static void pointer_dev_abs_x(struct uterm_input_dev *dev, int32_t value)
 			dev->pointer.x = dev->input->pointer_max_x;
 			dev->pointer.off_x = dev->input->pointer_max_x - value;
 		}
+		is_rel = true;
 		break;
 	case POINTER_TOUCHSCREEN:
 	case POINTER_VMOUSE:
@@ -125,11 +132,14 @@ static void pointer_dev_abs_x(struct uterm_input_dev *dev, int32_t value)
 	default:
 		return;
 	}
-	pointer_dev_send_move(dev);
+	pointer_dev_send_move(dev, dev->pointer.x - old_x, 0, is_rel);
 }
 
 static void pointer_dev_abs_y(struct uterm_input_dev *dev, int32_t value)
 {
+	int32_t old_y = dev->pointer.y;
+	bool is_rel = false;
+
 	switch (dev->pointer.kind) {
 	case POINTER_TOUCHPAD:
 		if (dev->pointer.touchpaddown == true)
@@ -144,6 +154,7 @@ static void pointer_dev_abs_y(struct uterm_input_dev *dev, int32_t value)
 			dev->pointer.y = dev->input->pointer_max_y;
 			dev->pointer.off_y = dev->input->pointer_max_y - value;
 		}
+		is_rel = true;
 		break;
 	case POINTER_TOUCHSCREEN:
 	case POINTER_VMOUSE:
@@ -153,7 +164,7 @@ static void pointer_dev_abs_y(struct uterm_input_dev *dev, int32_t value)
 	default:
 		return;
 	}
-	pointer_dev_send_move(dev);
+	pointer_dev_send_move(dev, dev->pointer.y - old_y, 0, is_rel);
 }
 
 void pointer_dev_abs(struct uterm_input_dev *dev, uint16_t code, int32_t value)
