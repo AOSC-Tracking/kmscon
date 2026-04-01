@@ -1382,6 +1382,46 @@ static void init_modes(struct display *disp, drmModeConnector *conn)
 		  ddrm->current_mode->vdisplay);
 }
 
+static unsigned int get_drm_panel_orientation(int fd, drmModeConnector *conn)
+{
+	drmModeObjectPropertiesPtr props;
+	drmModePropertyPtr prop;
+	unsigned int hw_rotation = 0;
+	uint32_t i;
+	int j;
+
+	props = drmModeObjectGetProperties(fd, conn->connector_id, DRM_MODE_OBJECT_CONNECTOR);
+	if (!props)
+		return hw_rotation;
+
+	for (i = 0; i < props->count_props; i++) {
+		prop = drmModeGetProperty(fd, props->props[i]);
+		if (!prop)
+			continue;
+
+		if (strcmp(prop->name, "panel orientation") == 0) {
+			for (j = 0; j < prop->count_enums; j++) {
+				if (prop->enums[j].value == props->prop_values[i]) {
+					log_info("DRM Panel Orientation: '%s'",
+						 prop->enums[j].name);
+
+					if (strcmp(prop->enums[j].name, "Right Side Up") == 0)
+						hw_rotation = 1;
+					else if (strcmp(prop->enums[j].name, "Upside Down") == 0)
+						hw_rotation = 2;
+					else if (strcmp(prop->enums[j].name, "Left Side Up") == 0)
+						hw_rotation = 3;
+					break;
+				}
+			}
+		}
+		drmModeFreeProperty(prop);
+	}
+	drmModeFreeObjectProperties(props);
+
+	return hw_rotation;
+}
+
 static void bind_display(struct video *video, drmModeRes *res, drmModeConnector *conn)
 {
 	struct drm_video *vdrm = video->data;
@@ -1396,6 +1436,9 @@ static void bind_display(struct video *video, drmModeRes *res, drmModeConnector 
 	if (ret)
 		return;
 	ddrm = disp->data;
+
+	disp->default_orientation = get_drm_panel_orientation(vdrm->fd, conn);
+
 	init_modes(disp, conn);
 
 	ddrm->connector.id = conn->connector_id;

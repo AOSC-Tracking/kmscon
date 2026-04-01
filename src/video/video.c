@@ -244,6 +244,15 @@ unsigned int display_get_height(struct display *disp)
 }
 
 SHL_EXPORT
+unsigned int display_get_default_orientation(struct display *disp)
+{
+	if (!disp)
+		return 0;
+
+	return disp->default_orientation;
+}
+
+SHL_EXPORT
 int display_get_state(struct display *disp)
 {
 	if (!disp || !disp->video)

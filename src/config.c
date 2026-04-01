@@ -184,7 +184,7 @@ static void print_help()
 		"\t                                     error, a default mode will be used.\n"
 		"\t                                     This option is incompatible with\n"
 		"\t                                     --use-original-mode.\n"
-		"\t    --rotate <orientation>  [normal] normal, right, upside-down, left\n"
+		"\t    --rotate <orientation>  [auto] auto, normal, right, upside-down, left\n"
 		"\n"
 		"Font Options:\n"
 		"\t    --font-engine <engine>  [pango]\n"
@@ -795,7 +795,7 @@ int kmscon_conf_new(struct conf_ctx **out)
 		CONF_OPTION_BOOL(0, "use-original-mode", &conf->use_original_mode, true),
 		CONF_OPTION_STRING(0, "mode", &conf->mode, NULL),
 		CONF_OPTION_STRING(0, "multi-monitor", &conf->multi_monitor, "clone"),
-		CONF_OPTION_STRING(0, "rotate", &conf->rotate, "normal"),
+		CONF_OPTION_STRING(0, "rotate", &conf->rotate, "auto"),
 
 		/* Font Options */
 		CONF_OPTION_STRING(0, "font-engine", &conf->font_engine, NULL),

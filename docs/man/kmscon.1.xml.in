@@ -637,8 +637,9 @@
           <para>Select the desired orientation of the output. Available orientations
                 are 'normal' meaning output is not rotated, 'right' meaning output is
                 rotated 90° clock-wise, 'upside-down' meaning output is rotated 180°
-                clock-wise and 'left' meaning output is rotated 90° counter clock-wise.
-                (default: 'normal')
+                clock-wise and 'left' meaning output is rotated 90° counter clock-wise,
+                and 'auto' meaning use the DRM panel orientation when available.
+                (default: 'auto')
           </para>
         </listitem>
       </varlistentry>

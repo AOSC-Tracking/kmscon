@@ -400,10 +400,10 @@ static void update_pointer_max_all(struct kmscon_terminal *term)
 		if (!sw || !sh)
 			continue;
 
-		if (sw < max_x)
-			max_x = sw;
-		if (sh < max_y)
-			max_y = sh;
+		if (sw - 1 < max_x)
+			max_x = sw - 1;
+		if (sh - 1 < max_y)
+			max_y = sh - 1;
 	}
 	if (max_x < INT_MAX && max_y < INT_MAX)
 		input_set_pointer_max(term->input, max_x, max_y);
@@ -703,6 +703,8 @@ int terminal_add_display(struct kmscon_terminal *term, struct display *disp)
 	int ret;
 	const char *be;
 	bool opengl;
+	const char *rot_str;
+	struct screen *first;
 
 	shl_dlist_for_each(iter, &term->screens)
 	{
@@ -733,7 +735,38 @@ int terminal_add_display(struct kmscon_terminal *term, struct display *disp)
 	else
 		be = "bbulk";
 
-	ret = kmscon_text_new(&scr->txt, be, term->conf->rotate);
+	rot_str = term->conf->rotate;
+	if (!rot_str || rot_str[0] == '\0' || strcmp(rot_str, "auto") == 0) {
+		if (!shl_dlist_empty(&term->screens)) {
+			first = shl_dlist_entry(term->screens.next, struct screen, list);
+			switch (kmscon_text_get_orientation(first->txt)) {
+			case OR_RIGHT:
+				rot_str = "right";
+				break;
+			case OR_UPSIDE_DOWN:
+				rot_str = "upside-down";
+				break;
+			case OR_LEFT:
+				rot_str = "left";
+				break;
+			default:
+				rot_str = "normal";
+				break;
+			}
+		} else {
+			unsigned int def_or = display_get_default_orientation(scr->disp);
+			if (def_or == 1)
+				rot_str = "right";
+			else if (def_or == 2)
+				rot_str = "upside-down";
+			else if (def_or == 3)
+				rot_str = "left";
+			else
+				rot_str = "normal";
+		}
+	}
+
+	ret = kmscon_text_new(&scr->txt, be, rot_str);
 	if (ret) {
 		log_error("cannot create text-renderer");
 		goto err_cb;
@@ -1063,13 +1096,70 @@ static void pointer_event(struct input *input, struct input_pointer_event *ev, v
 	struct kmscon_terminal *term = data;
 
 	if (ev->event == POINTER_MOVED) {
-		term->pointer.x = ev->pointer_x;
-		term->pointer.y = ev->pointer_y;
+		int32_t px = ev->pointer_x;
+		int32_t py = ev->pointer_y;
+		unsigned int log_w = INT_MAX, log_h = INT_MAX;
+		unsigned int orientation = OR_NORMAL;
+		struct shl_dlist *iter;
+		struct screen *scr;
+
+		if (!shl_dlist_empty(&term->screens)) {
+			scr = shl_dlist_entry(term->screens.next, struct screen, list);
+			if (scr->txt)
+				orientation = kmscon_text_get_orientation(scr->txt);
+		}
+
+		shl_dlist_for_each(iter, &term->screens)
+		{
+			unsigned int sw, sh;
+
+			scr = shl_dlist_entry(iter, struct screen, list);
+			if (orientation == OR_NORMAL || orientation == OR_UPSIDE_DOWN) {
+				sw = display_get_width(scr->disp);
+				sh = display_get_height(scr->disp);
+			} else {
+				sw = display_get_height(scr->disp);
+				sh = display_get_width(scr->disp);
+			}
+			if (sw < log_w)
+				log_w = sw;
+			if (sh < log_h)
+				log_h = sh;
+		}
+
+		if (ev->is_touchscreen && orientation != OR_NORMAL && log_w > 1 &&
+		    log_h > 1 && log_w != INT_MAX && log_h != INT_MAX) {
+			int32_t max_x = log_w - 1;
+			int32_t max_y = log_h - 1;
+
+			if (orientation == OR_RIGHT) {
+				px = ev->pointer_y * max_x / max_y;
+				py = max_y - (ev->pointer_x * max_y / max_x);
+			} else if (orientation == OR_UPSIDE_DOWN) {
+				px = max_x - ev->pointer_x;
+				py = max_y - ev->pointer_y;
+			} else if (orientation == OR_LEFT) {
+				px = max_x - (ev->pointer_y * max_x / max_y);
+				py = ev->pointer_x * max_y / max_x;
+			}
+
+			if (px < 0)
+				px = 0;
+			if (py < 0)
+				py = 0;
+			if (px > max_x)
+				px = max_x;
+			if (py > max_y)
+				py = max_y;
+		}
+
+		term->pointer.x = px;
+		term->pointer.y = py;
 
 		coord_to_cell(term, term->pointer.x, term->pointer.y, &term->pointer.posx,
 			      &term->pointer.posy);
 		term->pointer.visible = true;
-		hw_cursor_show(term, ev->pointer_x, ev->pointer_y);
+		hw_cursor_show(term, px, py);
 	}
 
 	if (tsm_vte_get_mouse_mode(term->vte) != TSM_MOUSE_TRACK_DISABLE &&

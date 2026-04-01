@@ -499,7 +499,8 @@ font-name=Ubuntu Mono
       <varlistentry>
         <term><option>rotate</option></term>
         <listitem>
-          <para>Orientation of output to use. (default: normal)</para>
+          <para>Orientation of output to use. 'auto' uses the DRM panel
+                orientation when available. (default: auto)</para>
         </listitem>
       </varlistentry>
 
