@@ -24,6 +24,7 @@ static void pointer_dev_send_move(struct uterm_input_dev *dev)
 	pev.event = UTERM_MOVED;
 	pev.pointer_x = dev->pointer.x;
 	pev.pointer_y = dev->pointer.y;
+	pev.is_touchscreen = (dev->pointer.kind == POINTER_TOUCHSCREEN);
 
 	/* Include button state if a button is pressed during motion (drag) */
 	if (dev->pointer.pressed_button != BUTTON_NONE) {
@@ -56,7 +57,8 @@ static void pointer_dev_send_button(struct uterm_input_dev *dev, uint8_t button,
 	pev.button = button;
 	pev.pressed = pressed;
 	pev.double_click = dbl_click;
-
+	pev.is_touchscreen = (dev->pointer.kind == POINTER_TOUCHSCREEN);
+	
 	shl_hook_call(dev->input->pointer_hook, dev->input, &pev);
 }
 

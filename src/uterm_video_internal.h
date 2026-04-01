@@ -92,7 +92,8 @@ struct uterm_display {
 	unsigned int flags;
 	unsigned int width;
 	unsigned int height;
-
+	unsigned int default_orientation;
+	
 	struct uterm_video *video;
 
 	struct shl_hook *hook;

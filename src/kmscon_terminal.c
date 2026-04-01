@@ -407,7 +407,8 @@ static int add_display(struct kmscon_terminal *term, struct uterm_display *disp)
 	int ret;
 	const char *be;
 	bool opengl;
-
+	const char *rot_str;
+	
 	shl_dlist_for_each(iter, &term->screens)
 	{
 		scr = shl_dlist_entry(iter, struct screen, list);
@@ -436,7 +437,18 @@ static int add_display(struct kmscon_terminal *term, struct uterm_display *disp)
 	else
 		be = "bbulk";
 
-	ret = kmscon_text_new(&scr->txt, be, term->conf->rotate);
+	rot_str = term->conf->rotate;
+	if (!rot_str || rot_str[0] == '\0' || strcmp(rot_str, "normal") == 0) {
+		unsigned int def_or = uterm_display_get_default_orientation(disp);
+		if (def_or == 1)
+			rot_str = "right";
+		else if (def_or == 2)
+			rot_str = "upside-down";
+		else if (def_or == 3)
+			rot_str = "left";
+	}
+
+	ret = kmscon_text_new(&scr->txt, be, rot_str);
 	if (ret) {
 		log_error("cannot create text-renderer");
 		goto err_cb;
@@ -686,8 +698,48 @@ static void pointer_event(struct uterm_input *input, struct uterm_input_pointer_
 	struct kmscon_terminal *term = data;
 
 	if (ev->event == UTERM_MOVED) {
-		term->pointer.x = ev->pointer_x;
-		term->pointer.y = ev->pointer_y;
+		int px = ev->pointer_x;
+		int py = ev->pointer_y;
+		unsigned int orientation = 0;
+		unsigned int log_w = INT_MAX, log_h = INT_MAX;
+		unsigned int sw, sh;
+		struct shl_dlist *iter;
+		struct screen *scr;
+
+		if (!shl_dlist_empty(&term->screens)) {
+			scr = shl_dlist_entry(term->screens.next, struct screen, list);
+			if (scr->txt)
+				orientation = kmscon_text_get_orientation(scr->txt);
+		}
+
+		shl_dlist_for_each(iter, &term->screens) {
+			scr = shl_dlist_entry(iter, struct screen, list);
+			if (orientation == 0 || orientation == 2) {
+				sw = uterm_display_get_width(scr->disp);
+				sh = uterm_display_get_height(scr->disp);
+			} else {
+				sw = uterm_display_get_height(scr->disp);
+				sh = uterm_display_get_width(scr->disp);
+			}
+			if (sw < log_w) log_w = sw;
+			if (sh < log_h) log_h = sh;
+		}
+
+		if (ev->is_touchscreen && orientation != 0 && log_w > 0 && log_h > 0 && log_w != INT_MAX && log_h != INT_MAX) {
+			if (orientation == 1) { 
+				px = ev->pointer_y * log_w / log_h;
+				py = log_h - (ev->pointer_x * log_h / log_w);
+			} else if (orientation == 2) { 
+				px = log_w - ev->pointer_x;
+				py = log_h - ev->pointer_y;
+			} else if (orientation == 3) { 
+				px = log_w - (ev->pointer_y * log_w / log_h);
+				py = ev->pointer_x * log_h / log_w;
+			}
+		}
+
+		term->pointer.x = px;
+		term->pointer.y = py;
 
 		coord_to_cell(term, term->pointer.x, term->pointer.y, &term->pointer.posx,
 			      &term->pointer.posy);
@@ -701,8 +753,6 @@ static void pointer_event(struct uterm_input *input, struct uterm_input_pointer_
 	}
 
 	switch (ev->event) {
-	default:
-		break;
 	case UTERM_MOVED:
 		if (term->pointer.select)
 			update_selection(term->console, term->pointer.posx, term->pointer.posy);

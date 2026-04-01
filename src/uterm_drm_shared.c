@@ -84,6 +84,46 @@ static uint64_t get_property_value(int fd, drmModeObjectPropertiesPtr props, con
 	return 0;
 }
 
+static unsigned int get_drm_panel_orientation(int fd, drmModeConnectorPtr conn)
+{
+	drmModeObjectPropertiesPtr props;
+	drmModePropertyPtr prop;
+	unsigned int hw_rotation = 0;
+	uint32_t i;
+	int j;
+
+	props = drmModeObjectGetProperties(fd, conn->connector_id, DRM_MODE_OBJECT_CONNECTOR);
+	if (!props)
+		return hw_rotation;
+
+	for (i = 0; i < props->count_props; i++) {
+		prop = drmModeGetProperty(fd, props->props[i]);
+		if (!prop)
+			continue;
+
+		if (strcmp(prop->name, "panel orientation") == 0) {
+			for (j = 0; j < prop->count_enums; j++) {
+				if (prop->enums[j].value == props->prop_values[i]) {
+					log_info("DRM Panel Orientation: '%s'", prop->enums[j].name);
+					
+					if (strcmp(prop->enums[j].name, "Right Side Up") == 0) {
+						hw_rotation = 1;
+					} else if (strcmp(prop->enums[j].name, "Upside Down") == 0) {
+						hw_rotation = 2;
+					} else if (strcmp(prop->enums[j].name, "Left Side Up") == 0) {
+						hw_rotation = 3;
+					}
+					break;
+				}
+			}
+		}
+		drmModeFreeProperty(prop);
+	}
+	drmModeFreeObjectProperties(props);
+	
+	return hw_rotation;
+}
+
 static const char *drm_mode_prop_name(uint32_t type)
 {
 	switch (type) {
@@ -1137,6 +1177,8 @@ static void bind_display(struct uterm_video *video, drmModeRes *res, drmModeConn
 	ret = display_new(&disp, vdrm->display_ops, video, name);
 	if (ret)
 		return;
+
+	disp->default_orientation = get_drm_panel_orientation(vdrm->fd, conn);
 	ddrm = disp->data;
 	init_modes(disp, conn);
 

@@ -158,6 +158,7 @@ void uterm_display_unregister_cb(struct uterm_display *disp, uterm_display_cb cb
 
 unsigned int uterm_display_get_width(struct uterm_display *disp);
 unsigned int uterm_display_get_height(struct uterm_display *disp);
+unsigned int uterm_display_get_default_orientation(struct uterm_display *disp);
 int uterm_display_get_state(struct uterm_display *disp);
 int uterm_display_set_dpms(struct uterm_display *disp, int state);
 int uterm_display_get_dpms(const struct uterm_display *disp);

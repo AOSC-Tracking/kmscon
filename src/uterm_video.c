@@ -56,6 +56,14 @@ static inline void uterm_video_destroy(void *data)
 }
 
 SHL_EXPORT
+unsigned int uterm_display_get_default_orientation(struct uterm_display *disp)
+{
+	if (!disp)
+		return 0;
+
+	return disp->default_orientation;
+}
+
 const char *uterm_dpms_to_name(int dpms)
 {
 	switch (dpms) {
