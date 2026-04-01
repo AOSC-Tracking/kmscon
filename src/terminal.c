@@ -1167,11 +1167,22 @@ static void pointer_event(struct input *input, struct input_pointer_event *ev, v
 				log_h = sh;
 		}
 
-		if (ev->is_touchscreen && orientation != OR_NORMAL && log_w > 1 &&
-		    log_h > 1 && log_w != INT_MAX && log_h != INT_MAX) {
+		if (ev->is_relative) {
+			px = term->pointer.x + ev->delta_x;
+			py = term->pointer.y + ev->delta_y;
+
+			if (px < 0)
+				px = 0;
+			if (py < 0)
+				py = 0;
+			if (log_w != INT_MAX && px >= (int32_t)log_w)
+				px = log_w - 1;
+			if (log_h != INT_MAX && py >= (int32_t)log_h)
+				py = log_h - 1;
+		} else if (ev->is_touchscreen && orientation != OR_NORMAL && log_w > 1 &&
+			   log_h > 1 && log_w != INT_MAX && log_h != INT_MAX) {
 			int32_t max_x = log_w - 1;
 			int32_t max_y = log_h - 1;
-
 			if (orientation == OR_RIGHT) {
 				px = ev->pointer_y * max_x / max_y;
 				py = max_y - (ev->pointer_x * max_y / max_x);

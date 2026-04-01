@@ -80,6 +80,9 @@ struct input_pointer_event {
 	bool pressed;
 	bool double_click;
 	bool is_touchscreen;
+	int32_t delta_x;
+	int32_t delta_y;
+	bool is_relative;
 };
 
 #define INPUT_HAS_MODS(_ev, _mods) (((_ev)->mods & (_mods)) == (_mods))
