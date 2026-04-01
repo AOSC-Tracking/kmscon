@@ -578,3 +578,15 @@ void uterm_video_poll(struct uterm_video *video)
 
 	VIDEO_CALL(video->mod->ops.poll, 0, video);
 }
+
+SHL_EXPORT
+unsigned int uterm_display_get_mm_width(struct uterm_display *disp)
+{
+    return disp ? disp->mm_width : 0;
+}
+
+SHL_EXPORT
+unsigned int uterm_display_get_mm_height(struct uterm_display *disp)
+{
+    return disp ? disp->mm_height : 0;
+}

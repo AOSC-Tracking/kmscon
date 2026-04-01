@@ -94,6 +94,8 @@ struct kmscon_terminal {
 	struct kmscon_font_attr font_attr;
 	struct kmscon_font *font;
 
+	unsigned int font_scale;
+
 	struct kmscon_pointer pointer;
 };
 
@@ -408,7 +410,7 @@ static int add_display(struct kmscon_terminal *term, struct uterm_display *disp)
 	const char *be;
 	bool opengl;
 	const char *rot_str;
-	
+
 	shl_dlist_for_each(iter, &term->screens)
 	{
 		scr = shl_dlist_entry(iter, struct screen, list);
@@ -424,6 +426,28 @@ static int add_display(struct kmscon_terminal *term, struct uterm_display *disp)
 	memset(scr, 0, sizeof(*scr));
 	scr->term = term;
 	scr->disp = disp;
+
+	unsigned int sw = uterm_display_get_width(disp);
+    unsigned int sh = uterm_display_get_height(disp);
+    unsigned int mm_w = uterm_display_get_mm_width(disp);
+    unsigned int mm_h = uterm_display_get_mm_height(disp);
+    
+if (mm_w > 0 && mm_h > 0) {
+		unsigned int ppi_x = (sw * 254) / (mm_w * 10);
+		unsigned int ppi_y = (sh * 254) / (mm_h * 10);
+		unsigned int ppi = (ppi_x + ppi_y) / 2;
+
+		unsigned int scale = (ppi + 48) / 96;
+		if (scale < 1) scale = 1;
+		
+		if (scale > term->font_scale) {
+			log_info("HiDPI display detected (%ux%u, PPI: %u). Scaling font to %ux.", sw, sh, ppi, scale);
+
+			term->font_attr.points = (term->font_attr.points / term->font_scale) * scale;
+			font_set(term);
+			term->font_scale = scale;
+		}
+	}
 
 	ret = uterm_display_register_cb(scr->disp, display_event, scr);
 	if (ret) {
@@ -937,6 +961,8 @@ int kmscon_terminal_register(struct kmscon_session **out, struct kmscon_seat *se
 	strncpy(term->font_attr.name, term->conf->font_name, KMSCON_FONT_MAX_NAME - 1);
 	term->font_attr.ppi = term->conf->font_ppi;
 	term->font_attr.points = term->conf->font_size;
+
+	term->font_scale = 1;
 
 	ret = tsm_screen_new(&term->console, log_llog, NULL);
 	if (ret)

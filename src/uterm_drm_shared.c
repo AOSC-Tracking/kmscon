@@ -1178,6 +1178,9 @@ static void bind_display(struct uterm_video *video, drmModeRes *res, drmModeConn
 	if (ret)
 		return;
 
+	disp->mm_width = conn->mmWidth;
+	disp->mm_height = conn->mmHeight;
+
 	disp->default_orientation = get_drm_panel_orientation(vdrm->fd, conn);
 	ddrm = disp->data;
 	init_modes(disp, conn);

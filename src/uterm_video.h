@@ -196,6 +196,9 @@ int uterm_video_wake_up(struct uterm_video *video);
 bool uterm_video_is_awake(struct uterm_video *video);
 void uterm_video_poll(struct uterm_video *video);
 
+unsigned int uterm_display_get_mm_width(struct uterm_display *disp);
+unsigned int uterm_display_get_mm_height(struct uterm_display *disp);
+
 #ifdef BUILD_ENABLE_VIDEO_DRM2D
 extern struct uterm_video_module drm2d_module;
 
